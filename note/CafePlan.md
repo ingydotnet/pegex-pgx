@@ -59,7 +59,7 @@ these compilers are write-once-use-everywhere.
 
 == Step 7
 
-Write a Pegex/Cafe/TEstML based YAML loader. Now YAML works exactly the same
+Write a Pegex/Cafe/TestML based YAML loader. Now YAML works exactly the same
 across languages. Bugs get fixed once, for all. Acmeism works.
 
 == Challenges
