@@ -106,12 +106,8 @@ meta-value:
         ending
     /
 
-rule_name: /
-  (:
-    ALPHA ALNUM* (:[ DASH UNDER ] ALNUM+)* |
-    DASH+ |
-    UNDER+
-  )
+rule-name: /
+  [ ALPHA UNDER ]{2+} [ WORD DASH ]*
   (= [^ WORD DASH ])
 /
 
