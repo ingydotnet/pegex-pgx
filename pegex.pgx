@@ -2,103 +2,104 @@
 
 %grammar pegex
 %version 0.3.0
-%include pegex-atoms
+%include pegex_atoms
 
 
 grammar:
-  meta-section
-  rule-section
-  ( doc-ending | ERROR-rule-definition )
+  meta_section
+  rule_section
+  ( doc_ending | ERROR_rule_definition )
 
-meta-section: ( meta-definition | + | ERROR-meta-definition )*
+meta_section: ( meta_definition | __ | ERROR_meta_definition )*
 
-rule-section: ( rule-definition | + )*
+rule_section: ( rule_definition | __ )*
 
-meta-definition: / PERCENT meta-name BLANK+ meta-value /
+meta_definition: / PERCENT meta_name BLANK+ meta_value /
 
-rule-definition: rule-start rule-group ending
+rule_definition: rule_start rule_group ending
 
-rule-start: / ( rule-name ) BLANK* COLON -/
+rule_start: / ( rule_name ) BLANK* COLON _/
 
-rule-group: any-group
+rule_group: any_group
 
-any-group: /- PIPE? -/ all-group ( /- PIPE -/ all-group )*
+any_group: /_ PIPE? _/ all_group ( /_ PIPE _/ all_group )*
 
-all-group: rule-part (- rule-part)*
+all_group: rule_part (_ rule_part)*
 
-rule-part: rule-item{1,2} % /+ ( PERCENT{1,2} ) +/
+rule_part: rule_item{1,2} % /__ ( PERCENT{1,2} ) __/
 
-rule-item:
-  | bracketed-group
-  | whitespace-token
-  | rule-reference
-  | quoted-regex
-  | regular-expression
-  | error-message
+rule_item:
+  | bracketed_group
+  | whitespace_token
+  | rule_reference
+  | quoted_regex
+  | regular_expression
+  | error_message
 
-rule-reference:
+rule_reference:
   /
-    ( rule-modifier? )      # [=!.-+]
-    ( rule-name )
-    ( rule-quantifier? )    # [?*+] {2+} {2,3}
+    ( rule_modifier? )      # [=!.-+]
+    ( rule_name )
+    ( rule_quantifier? )    # [?*+] {2+} {2,3} {2}
     (! BLANK* COLON )       # Avoid parsing 'foo:'
   /                         # as a rule reference.
 
-quoted-regex:
+quoted_regex:
   / TICK ( [^ TICK ]* ) TICK /
 
-regular-expression:
+regular_expression:
   SLASH
-  whitespace-start?
+  whitespace_start?
   (
-  | whitespace-must
-  | whitespace-maybe
-  | quoted-regex
-  | regex-rule-reference
-  | +
-  | regex-raw
+  | whitespace_must
+  | whitespace_maybe
+  | quoted_regex
+  | regex_rule_reference
+  | __
+  | regex_raw
   )*
   SLASH
 
-whitespace-start: / ([ PLUS DASH]) (! [ DASH TILDE ]) /
+whitespace_start: / ( UNDER UNDER | UNDER) /   # ?? (! [ DASH TILDE ]) 
 
-whitespace-must: /+ (: PLUS | DASH DASH )  (= [ SPACE SLASH CR NL ]) /
+whitespace_must: /__ UNDER UNDER  (= [ SPACE SLASH CR NL ]) /
 
-whitespace-maybe: /- DASH (= [ SPACE SLASH CR NL ]) /
+whitespace_maybe: /_ UNDER (= [ SPACE SLASH CR NL ]) /
 
-regex-rule-reference:
+whitespace_token:
+    / ( (: UNDER UNDER | UNDER ) ) (! UNDER )/
+
+regex_rule_reference:
   /
-    + ( rule-name )
+    __ ( rule_name )
     (! BLANK* COLON )
   /
 
-regex-raw: / ([^ WS SLASH TICK LANGLE ]+) /
+regex_raw: / ([^ WS SLASH TICK LANGLE ]+) /
 
-bracketed-group:
-    / ( group-modifier? ) LPAREN -/
-    rule-group
-    /- RPAREN ( rule-quantifier? ) /
+bracketed_group:
+    / ( group_modifier? ) LPAREN _/
+    rule_group
+    /_ RPAREN ( rule_quantifier? ) /
 
-whitespace-token:
-    / ( (: PLUS | DASH | DASH DASH | TILDE | TILDE TILDE ) ) (= + )/
-
-error-message:
+error_message:
     / GRAVE ( [^ GRAVE DOS ]* ) GRAVE /
 
-rule-modifier: / [ BANG EQUAL PLUS DASH DOT ] /
+rule_modifier: / [ BANG EQUAL PLUS DASH DOT ] /
 
-group-modifier: / [ DASH DOT ] /
+group_modifier: / [ DASH DOT ] /
 
-rule-quantifier:
+rule_quantifier:
     / (:
-        [ STAR PLUS QMARK ] |
+        [ STAR PLUS QMARK ]  |
+        LCURLY DIGIT+ RCURLY |
         LCURLY DIGIT+ (: COMMA DIGIT+ | PLUS)? RCURLY
     ) /
 
-meta-name:
+meta_name:
     / ( 'grammar' | 'extends' | 'include' | 'version' ) /
 
-meta-value:
+meta_value:
     /
         BLANK*
         ( [^ SEMI BREAK ]*? )
@@ -106,17 +107,17 @@ meta-value:
         ending
     /
 
-rule-name: /
-  UNDER* ALPHA [ WORD DASH ]*
-  (= [^ WORD DASH ])
+rule_name: /
+  UNDER* (: ALPHA WORD*)?
+  (= [^ WORD ])
 /
 
 ending: /
-  ~?
+  _?
   (:
-    BREAK - SEMI? - |
-    comment - SEMI? - |
-    SEMI - |
+    BREAK _ SEMI? _ |
+    comment _ SEMI? _ |
+    SEMI _ |
     EOS
   )
 /
@@ -129,94 +130,94 @@ comment: / HASH ANY* (: BREAK | EOS ) /
 # Pegex common error recognition and reporting:
 ###
 
-doc-ending: /- EOS /
+doc_ending: /_ EOS /
 
-illegal-non-modifier-char: / [^
+illegal_non_modifier_char: / [^
     WORD LPAREN RPAREN LANGLE SLASH TILDE PIPE GRAVE WS
 ] /
 
-illegal-non-quantifier-char: / [^
+illegal_non_quantifier_char: / [^
     WORD LPAREN RPAREN LANGLE SLASH TILDE PIPE GRAVE WS
     STAR PLUS QMARK BANG EQUAL PLUS DASH DOT COLON SEMI
 ] /
 
-ERROR-meta-definition:
+ERROR_meta_definition:
     /(= PERCENT WORD+ )/
     `Illegal meta rule`
 
 # Much of this is essentially a duplicate of the above rules, except with added
 # error checking
 
-ERROR-rule-definition: ERROR-rule-start ERROR-rule-group ( ending | `Rule ending syntax error` )
+ERROR_rule_definition: ERROR_rule_start ERROR_rule_group ( ending | `Rule ending syntax error` )
 
-ERROR-rule-group: ERROR-any-group | ERROR-all-group
+ERROR_rule_group: ERROR_any_group | ERROR_all_group
 
-ERROR-all-group: ERROR-rule-part+ % -
+ERROR_all_group: ERROR_rule_part+ % _
 
-ERROR-any-group: (ERROR-all-group)2+ % /- PIPE -/
+ERROR_any_group: ERROR_all_group{2+} % /_ PIPE _/
 
-ERROR-rule-part: (ERROR-rule-item)1-2 % /+ ( PERCENT{1,2} ) +/
+ERROR_rule_part: ERROR_rule_item{1-2} % /__ ( PERCENT{1,2} ) __/
 
-ERROR-rule-start: / ( rule-name ) BLANK* COLON -/ | `Rule header syntax error`
+ERROR_rule_start: / ( rule_name ) BLANK* COLON _/ | `Rule header syntax error`
 
-ERROR-rule-item:
-    rule-item |
-    ERROR-rule-reference |
-    ERROR-regular-expression |
-    ERROR-bracketed-group |
-    ERROR-error-message
+ERROR_rule_item:
+    rule_item |
+    ERROR_rule_reference |
+    ERROR_regular_expression |
+    ERROR_bracketed_group |
+    ERROR_error_message
 
-# Errors - rule-reference
-ERROR-rule-reference:
+# Errors - rule_reference
+ERROR_rule_reference:
     /(=
-        rule-modifier? rule-name
-        illegal-non-quantifier-char
+        rule_modifier? rule_name
+        illegal_non_quantifier_char
     )/
     `Illegal character in rule quantifier`
 |
-    !rule-modifier
+    !rule_modifier
     /(=
-        illegal-non-modifier-char
-        rule-name
-        rule-quantifier?       # [?*+] {2+} {2,3}
+        illegal_non_modifier_char
+        rule_name
+        rule_quantifier?       # [?*+] {2+} {2,3} {2}
         (! BLANK* COLON )      # Avoid parsing 'foo:'
     )/                         # as a rule reference.
     `Illegal rule modifier (must be [=!.-+]?)`
 
-# Errors - regular-expression
-ERROR-regular-expression:
-    /(= SLASH ( [^ SLASH ]* ) doc-ending )/
+# Errors - regular_expression
+ERROR_regular_expression:
+    /(= SLASH ( [^ SLASH ]* ) doc_ending )/
     `Runaway regular expression; no ending slash at EOF`
 
-# Errors - bracketed-group
-ERROR-bracketed-group:
-    /(! group-modifier) (= illegal-non-modifier-char LPAREN )/
+# Errors - bracketed_group
+ERROR_bracketed_group:
+    /(! group_modifier) (= illegal_non_modifier_char LPAREN )/
     `Illegal group rule modifier (can only use .)`
 |
-    / ( group-modifier? ) LPAREN -/
-    rule-group
+    / ( group_modifier? ) LPAREN _/
+    rule_group
     (
-        =doc-ending
+        =doc_ending
         `Runaway rule group; no ending parens at EOF`
     |
-        / (= - RPAREN illegal-non-quantifier-char ) /
+        / (= _ RPAREN illegal_non_quantifier_char ) /
         `Illegal character in group rule quantifier`
     )
 
-# Errors - error-message
-ERROR-error-message:
+# Errors - error_message
+ERROR_error_message:
     /(= GRAVE [^ GRAVE DOS ]* [ DOS ] [^ GRAVE ]* GRAVE )/
-    `Multi-line error messages not allowed!`
+    `Multi_line error messages not allowed!`
 |
-    /(= GRAVE [^ GRAVE ]* doc-ending )/
+    /(= GRAVE [^ GRAVE ]* doc_ending )/
     `Runaway error message; no ending grave at EOF`
 
 # Errors - separation
-ERROR-separation:
-    /(= - PERCENT{3} )/
+ERROR_separation:
+    /(= _ PERCENT{3} )/
     `Leading separator form (BOK) no longer supported`
 |
-    /(= - PERCENT{1,2} [^ WS ] )/
+    /(= _ PERCENT{1,2} [^ WS ] )/
     `Illegal characters in separator indicator`
 
 # vim: set lisp:
