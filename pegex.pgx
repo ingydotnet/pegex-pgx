@@ -107,7 +107,7 @@ meta-value:
     /
 
 rule-name: /
-  [ ALPHA UNDER ]{2+} [ WORD DASH ]*
+  UNDER* ALPHA [ WORD DASH ]*
   (= [^ WORD DASH ])
 /
 
