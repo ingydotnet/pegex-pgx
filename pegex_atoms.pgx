@@ -1,15 +1,10 @@
 # Atom rules for pegex grammars.
-%grammar pegex-atoms
+%grammar pegex_atoms
 %version 0.3.0
 
-# Default whitespace rules for that use '~'
-ws      : WS ;
-ws1     : ws* ;
-ws2     : ws+ ;
-
-# Default whitespace rules for that use '-' and '+'
-_       : ws1 ;
-__      : ws2 ;
+# Whitespace rules
+_       : WS* ;
+__      : WS+ ;
 
 # Special rules
 ALWAYS  : '' ;
