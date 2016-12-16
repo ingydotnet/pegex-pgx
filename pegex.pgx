@@ -92,7 +92,6 @@ group_modifier: / [ DASH DOT ] /
 rule_quantifier:
     / (:
         [ STAR PLUS QMARK ]  |
-        LCURLY DIGIT+ RCURLY |
         LCURLY DIGIT+ (: COMMA DIGIT+ | PLUS)? RCURLY
     ) /
 
