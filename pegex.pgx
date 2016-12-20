@@ -106,9 +106,13 @@ meta_value:
         ending
     /
 
-rule_name: /
-  UNDER* (: ALPHA WORD*)?
-  (= [^ WORD ])
+rule_name:  scoped_identifier
+
+scoped_identifier: simple_identifier % DOT  # Namespace support
+
+simple_identifier: /
+  UNDER* (: ALPHA WORD*)?       # '_', '__' are valid rule names (for pegex_atoms)
+  (= [^ WORD ])                 # A digit can never precede the first letter, so '__8bit', '8bit', '_____8bit' are all invalid.
 /
 
 ending: /
