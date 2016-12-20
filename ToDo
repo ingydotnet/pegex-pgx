@@ -1,4 +1,111 @@
-- Add a commit syntax. Maybe ! or : or ::
-- Release Perl 0.21
-- Release Node update
-- Release Python version
+Done
+----
+X Make Pegex::Grammar::Atoms a real class the is the default parent class
+	- Atoms are just more rules.
+		- No more looking at implementations to find their definitions.
+		- With regex combining logic, most could be trimmed from rule list.
+		- A down and dirty bootstrap could be written in any language, even if no regex engine exists.
+	- See file pegex_atoms.pgx
+	X No longer necessary
+		- Support symrules
+		- Atoms support:
+		  %symrule + __
+		  %symrule ~ _
+		  %symrule ~~ __
+		  _: /WS*/
+		  __: /WS+/
+X Remove <> rule braces
+	- To support change, range quantifiers are now regex style (enclosed in {})
+X '-' always means '_' in a rulename
+	- forced by identifier change
++ Support rule namespacing: grammar-name.rule-name
+	- See 'scoped_identifier'
+	- The rest is implementation side, which may or may not be OO.
++ Support grammar names, inheritance, inclusion
+	- 'scoped_identifier' kind-of/sort-of/maybe handles this as a natural side effect.
+		- Include a file
+		- Override by reusing same rulename.
+	- Add "%include <pgx file> as <namespace>" to auto-wrap rules with a prefix.
+	- Some method of defining start and end of a namespace.
+		- File level meta directive
+		- Break separation of meta/rules, so you can have "%namespace_start" and "%namespace_end"
+		- C style braces
+		- Python indent style (<evil laughter>)
+		- Manually: Define rules following scoped_identifier syntax.
+	- Inheritance/reusability
+		- Really needs a methods to insert into "inherited" rules.
+		- "insert choice before/after ____ in rule ____"
+		- "insert into all_group before/after ____ in <choice insert>"
+		- "insert rule X between rule A and rule B"
+			- replace all references to rule B in rule A with rule X.
+
+Not done
+--------
+- Probably need to change or get rid of the '.' (skip) rule and group modifier.  (see 'scoped_identifier')
+- Rules now must start: "(\n|;\ *)rule-name: "
+- %include error-class
+  - Names a pegex class containing error rules
+  - grammar name is 'error'
+  - foo: bar | baz | !! # same as:
+    - foo: bar | baz | error:foo
+- Support '…' literal text   (KA: huh?)
+  - 'foo.bar baz' → /foo\.bar\ baz/
+  - / 'foo' . 'bar.' / → /foo.bar\./
+- Add a commit syntax. Maybe ! or : or ::	(KA: huh?)
+
+Going beyond...
+---------------
+- Keyword strings? 'IAmAKeword'k (case insensitive), 'ImMoreImportant'K (case sensitive)
+- Grammar reduction
+	"- Regexes or refs-to-regexes should be combined into a single regex"
+		- Trim unused rules.  (has no references remaining)
+	- Syntax support, or is automation fully capable?
+		- Force keeping rules?
+		- Force removing/combining rules?  (Flag most of pegex_atoms)
+- Semantic actions (hate the name and its negative implications, but... that is what is out there.)
+	- OBJECTIVE: Make the grammar reversible!
+		- Traditional perspective:  Grammar maps input to a tree structure.  A parser.  THE END.
+		- If the grammar defines what goes where, then flip things around.  Grammar maps tree to text stream.  A code generator!!!
+			- Probably needs a "style" indicator
+			- Use style rules, so you can inherit/override output.  (Think of the various C style guides!!)
+	- Think of them as suggestions to the implementation.
+		- Ignore if you want a parse tree, or know what you want to do.
+		- Optional: retain Pegex logic as default (?)
+	- Just the minimum!!
+		- AST suggestions/hints/clues.  Looks like a dict or array.  Up to implementation to use struct, or object, or ...
+		- Declarative!  No sneaky hidden stuff.
+		- Not user extensible.  Could introduce sneaky hidden stuff.
+	- Only after an all_group (C-ish inline-if) - KEEP THE GRAMMAR CLEAN(ER).
+		- {<on parse success>} only??
+		OR
+		- ?{<on parse success>}:{<on parse fail>}    (make both true and false parts optional, less mess)
+		- {<test>}?{<true>}:{<false>}
+	- Possible (or probable) implications
+		- Remove skip, flatten and wrap modifiers.
+		- Use named group captures.
+			A) Because nested groups can be a pain to sort out which pieces are matches 1, 5, and 24.
+				- ESPECIALLY if a regex is combined, then all numbering goes out the window!
+			B) Using "assumed" position matching could be the wrong order.  (i.e. node children are [\1, \2, \3, \4])
+- Context support (Yep.  I realize this is a headache.)
+	- Keyword support.  Python-like indentation.  Namespaces (symbol tables, scopes, yadda yadda yadda).
+	- What is the minimum necessary?  Stacks, arrays, dicts.  Nesting these!??!? (i.e. a stack of dicts?)
+	- Meta directive to define needs.  For example:
+		- %context array Keywords
+		- %context stack Indentation
+		- %context stack Scope of array Identifiers
+	
+
+Really, implementation ideas... but can pegex hint heavily in that direction?
+-----------------------------------------------------------------------------
+- A Grammar is really just an OO class
+- A pgx grammar file defines rules for the class
+- Rules are like methods
+- Rules can be actual methods too
+
+
+
+
+Not part of pegex-pgx
+---------------------
+- Ship Pegex.pm with dzil.
+  - Can put TestML::Compiler::Lite into inc/
